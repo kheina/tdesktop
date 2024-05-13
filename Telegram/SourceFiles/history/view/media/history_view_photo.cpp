@@ -257,11 +257,13 @@ QSize Photo::countCurrentSize(int newWidth) {
 	}
 	const auto enlargeInner = st::historyPageEnlargeSize;
 	const auto enlargeOuter = 2 * st::historyPageEnlargeSkip + enlargeInner;
+	// these conditions open the webpage rather than the in-app preview.
+	// should be used to omit certain websites the app can't pull previews from
 	const auto showEnlarge = (_parent->media() != this)
 		&& _parent->data()->media()
 		&& !_parent->data()->isSponsored()
 		&& _parent->data()->media()->webpage()
-		&& _parent->data()->media()->webpage()->suggestEnlargePhoto()
+		&& _parent->data()->media()->webpage()->siteName != u"YouTube"_q
 		&& (newWidth >= enlargeOuter)
 		&& (newHeight >= enlargeOuter);
 	_showEnlarge = showEnlarge ? 1 : 0;
@@ -384,13 +386,14 @@ void Photo::draw(Painter &p, const PaintContext &context) const {
 			return spoilerTagBackground();
 		});
 	}
-	if (showEnlarge) {
-		auto hq = PainterHighQualityEnabler(p);
-		const auto rect = enlargeRect();
-		const auto radius = st::historyPageEnlargeRadius;
-		p.drawRoundedRect(rect, radius, radius);
-		sti->historyPageEnlarge.paintInCenter(p, rect);
-	}
+	// never show the enlarge button
+	// if (showEnlarge) {
+	// 	auto hq = PainterHighQualityEnabler(p);
+	// 	const auto rect = enlargeRect();
+	// 	const auto radius = st::historyPageEnlargeRadius;
+	// 	p.drawRoundedRect(rect, radius, radius);
+	// 	sti->historyPageEnlarge.paintInCenter(p, rect);
+	// }
 	if (_purchasedPriceTag) {
 		auto geometry = rthumb;
 		if (showEnlarge) {
@@ -678,7 +681,8 @@ TextState Photo::textState(QPoint point, StateRequest request) const {
 			: _savel;
 		if (_showEnlarge
 			&& result.link == _openl
-			&& enlargeRect().contains(point)) {
+			// since there is no enlarge button, do not check if the click is within it
+			/* && enlargeRect().contains(point) */) {
 			result.cursor = CursorState::Enlarge;
 		}
 	}
